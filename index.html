@@ -3,31 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משחק התאמה מושלם</title>
+    <title>החברים שלי מהמעון</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff0f5; text-align: center; margin: 0; padding: 20px; touch-action: manipulation; }
-        h1 { color: #ff69b4; font-size: 28px; }
+        h1 { color: #ff69b4; font-size: 32px; text-shadow: 2px 2px #fff; }
         #game-board, #targets { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 15px rgba(255,105,180,0.2); }
         .image-container, .target { width: 85px; height: 85px; border: 3px solid #ffd1dc; border-radius: 15px; overflow: hidden; cursor: pointer; transition: transform 0.2s; background: #fff; }
         img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         .selected { border: 4px solid #ff1493; transform: scale(1.1); box-shadow: 0 0 15px #ff1493; }
-        
-        /* כאן ביטלתי את השקיפות - עכשיו הן יראו רגיל לגמרי */
         .target img { opacity: 1; filter: none; } 
-        
         .matched { border: 4px solid #32cd32; background: #e8f5e9; pointer-events: none; animation: pop 0.3s ease-out; }
         .hidden { visibility: hidden; }
         #win-message { display: none; font-size: 32px; color: #ff1493; font-weight: bold; margin: 20px; animation: bounce 1s infinite; }
-        button { padding: 15px 40px; font-size: 22px; background: #ff69b4; color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 0 #d44d91; }
+        button { padding: 15px 40px; font-size: 22px; background: #ff69b4; color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 0 #d44d91; font-weight: bold; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
-    <h1>המשחק של הילד 🎈</h1>
-    <button id="start-btn" onclick="initGame()">לחצו להתחלה! ▶️</button>
-    <div id="win-message">ניצחתם! איזה אלופים! 🏆</div>
+    <h1>החברים שלי מהמעון 🎈</h1>
+    <button id="start-btn" onclick="initGame()">בואו נשחק! ▶️</button>
+    <div id="win-message">איזה יופי! מצאתם את כל החברים! 🏆</div>
 
     <div id="game-board"></div>
     <div id="targets"></div>
