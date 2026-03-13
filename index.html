@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משחק התאמה עם צלילים</title>
+    <title>משחק התאמה מושלם</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff0f5; text-align: center; margin: 0; padding: 20px; touch-action: manipulation; }
         h1 { color: #ff69b4; font-size: 28px; }
@@ -11,13 +11,14 @@
         .image-container, .target { width: 85px; height: 85px; border: 3px solid #ffd1dc; border-radius: 15px; overflow: hidden; cursor: pointer; transition: transform 0.2s; background: #fff; }
         img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         .selected { border: 4px solid #ff1493; transform: scale(1.1); box-shadow: 0 0 15px #ff1493; }
-        .target img { opacity: 0.6; filter: grayscale(60%); } 
-        .matched { border: 3px solid #32cd32; background: #f0fff0; pointer-events: none; animation: pop 0.3s ease-out; }
-        .matched img { opacity: 1 !important; filter: grayscale(0%); }
+        
+        /* כאן ביטלתי את השקיפות - עכשיו הן יראו רגיל לגמרי */
+        .target img { opacity: 1; filter: none; } 
+        
+        .matched { border: 4px solid #32cd32; background: #e8f5e9; pointer-events: none; animation: pop 0.3s ease-out; }
         .hidden { visibility: hidden; }
         #win-message { display: none; font-size: 32px; color: #ff1493; font-weight: bold; margin: 20px; animation: bounce 1s infinite; }
-        button { padding: 15px 40px; font-size: 22px; background: #ff69b4; color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 0 #d44d91; transition: 0.2s; }
-        button:active { transform: translateY(3px); box-shadow: 0 2px 0 #d44d91; }
+        button { padding: 15px 40px; font-size: 22px; background: #ff69b4; color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 0 #d44d91; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
     </style>
@@ -44,7 +45,6 @@
         let selectedElement = null;
         let matchesFound = 0;
 
-        // יצירת צלילים באמצעות קוד (Web Audio API)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playSound(type) {
@@ -52,38 +52,29 @@
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-
             if (type === 'match') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.1);
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } else if (type === 'win') {
-                const notes = [523.25, 659.25, 783.99, 1046.50];
-                notes.forEach((freq, i) => {
+                [523, 659, 783, 1046].forEach((f, i) => {
                     const o = audioCtx.createOscillator();
                     const g = audioCtx.createGain();
                     o.connect(g); g.connect(audioCtx.destination);
-                    o.frequency.value = freq;
-                    g.gain.setValueAtTime(0.1, audioCtx.currentTime + i * 0.1);
-                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.3);
-                    o.start(audioCtx.currentTime + i * 0.1);
-                    o.stop(audioCtx.currentTime + i * 0.1 + 0.3);
+                    o.frequency.value = f;
+                    g.gain.setValueAtTime(0.1, audioCtx.currentTime + i*0.1);
+                    o.start(audioCtx.currentTime + i*0.1); o.stop(audioCtx.currentTime + i*0.1 + 0.3);
                 });
             }
         }
 
         function initGame() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            document.getElementById('start-btn').innerText = 'ערבוב מחדש 🔄';
             document.getElementById('win-message').style.display = 'none';
             matchesFound = 0;
             selectedImgSrc = null;
             selectedElement = null;
-            
             const board = document.getElementById('game-board');
             const targets = document.getElementById('targets');
             board.innerHTML = '';
