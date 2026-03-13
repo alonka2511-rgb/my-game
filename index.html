@@ -1,111 +1,89 @@
-
-       <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>משחק התאמה של הילדים</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק זיכרון מתוק</title>
     <style>
-        body { font-family: sans-serif; background-color: #f7f7f7; text-align: center; margin: 0; padding: 20px; }
-        .instruction { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 20px; }
-        
-        .grid { 
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; 
-            margin: 20px auto; max-width: 800px; padding: 15px; background: white; border-radius: 15px;
-        }
-
-        .card { 
-            width: 120px; height: 120px; border: 3px solid #ddd; border-radius: 10px; 
-            cursor: pointer; object-fit: cover; transition: 0.2s;
-        }
-        .card:hover { transform: scale(1.05); }
-        .selected { border-color: #ff9f43; box-shadow: 0 0 15px #ff9f43; }
-
-        .slot { 
-            width: 120px; height: 120px; border: 3px dashed #aaa; border-radius: 10px; 
-            background: #eee; position: relative; cursor: pointer;
-        }
-        .slot img { 
-            width: 100%; height: 100%; object-fit: cover; border-radius: 8px; 
-            display: none; /* התמונה מוסתרת בהתחלה */
-        }
-        
-        .matched { border: 3px solid #2ecc71 !important; background: #e8f9f0 !important; }
-        .matched img { display: block !important; } /* התמונה מופיעה רק כשזה מצליח */
-        
-        .hidden { visibility: hidden; pointer-events: none; }
-        #cheer { font-size: 30px; color: #2ecc71; font-weight: bold; height: 40px; margin: 10px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f8ff; text-align: center; margin: 0; padding: 20px; }
+        h1 { color: #ff69b4; text-shadow: 2px 2px #fff; }
+        #game-board, #targets { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 30px; background: rgba(255,255,255,0.5); padding: 15px; border-radius: 20px; }
+        .image-container, .target { width: 80px; height: 80px; border: 3px solid #fff; border-radius: 10px; overflow: hidden; background: #eee; position: relative; cursor: pointer; }
+        img { width: 100%; height: 100%; object-fit: cover; }
+        .target img { opacity: 0.2; } /* הלוח התחתון שקוף בהתחלה */
+        .matched img { opacity: 1 !important; border: 3px solid #4caf50; }
+        .hidden { visibility: hidden; }
+        #win-message { display: none; font-size: 24px; color: #4caf50; font-weight: bold; margin-top: 20px; }
+        button { padding: 10px 20px; font-size: 18px; background: #ff69b4; color: white; border: none; border-radius: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h1>משחק התאמת תמונות ⭐</h1>
-    <div id="cheer"></div>
-    <div class="instruction">1. לחץ על תמונה כאן:</div>
-    
-    <div class="grid" id="topGrid"></div>
-    
-    <hr>
-    
-    <div class="instruction">2. עכשיו לחץ על הריבוע המתאים בלוח:</div>
-    <div class="grid" id="bottomGrid"></div>
+    <h1>משחק התמונות של הילד</h1>
+    <button id="start-btn" onclick="initGame()">לחצו כאן להתחלת המשחק!</button>
+    <div id="win-message">כל הכבוד! ניצחתם! 🎉</div>
+
+    <h3>מצאו את התמונה המתאימה:</h3>
+    <div id="game-board"></div>
+
+    <h3>הלוח שלי:</h3>
+    <div id="targets"></div>
 
     <script>
-        // רשימת התמונות עם סיומת jpg
+        // ודאי שהשמות כאן תואמים בדיוק לשמות הקבצים שהעלית!
         const images = [
-            'IMG-20260313-WA0000.jpg', 'IMG-20260313-WA0001.jpg', 'IMG-20260313-WA0002.jpg',
-            'IMG-20260313-WA0003.jpg', 'IMG-20260313-WA0004.jpg', 'IMG-20260313-WA0005.jpg',
-            'IMG-20260313-WA0006.jpg', 'IMG-20260313-WA0007.jpg', 'IMG-20260313-WA0008.jpg',
-            'IMG-20260313-WA0009.jpg'
+            'IMG-20260313-WA0000.jpg', 'IMG-20260313-WA0001.jpg',
+            'IMG-20260313-WA0002.jpg', 'IMG-20260313-WA0003.jpg',
+            'IMG-20260313-WA0004.jpg', 'IMG-20260313-WA0005.jpg',
+            'IMG-20260313-WA0006.jpg', 'IMG-20260313-WA0007.jpg',
+            'IMG-20260313-WA0008.jpg', 'IMG-20260313-WA0009.jpg'
         ];
 
-        let currentSelection = null;
-        let currentElement = null;
+        let matchesFound = 0;
 
-        const topGrid = document.getElementById('topGrid');
-        const bottomGrid = document.getElementById('bottomGrid');
-        const cheerDiv = document.getElementById('cheer');
-
-        // יצירת התמונות למעלה (מעורבב)
-        [...images].sort(() => Math.random() - 0.5).forEach(src => {
-            const img = document.createElement('img');
-            img.src = src;
-            img.className = 'card';
-            img.onclick = () => {
-                if (currentElement) currentElement.classList.remove('selected');
-                currentSelection = src;
-                currentElement = img;
-                img.classList.add('selected');
-                cheerDiv.innerText = ""; // איפוס הודעה
-            };
-            topGrid.appendChild(img);
-        });
-
-        // יצירת הלוח למטה
-        images.forEach(src => {
-            const slot = document.createElement('div');
-            slot.className = 'slot';
+        function initGame() {
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('win-message').style.display = 'none';
+            matchesFound = 0;
             
-            const img = document.createElement('img');
-            img.src = src;
-            slot.appendChild(img);
+            const board = document.getElementById('game-board');
+            const targets = document.getElementById('targets');
+            
+            board.innerHTML = '';
+            targets.innerHTML = '';
 
-            slot.onclick = () => {
-                if (currentSelection === src) {
-                    // הצלחה!
-                    slot.classList.add('matched');
-                    currentElement.classList.add('hidden');
-                    cheerDiv.innerText = "כל הכבוד! 🎉";
-                    currentSelection = null;
-                    currentElement = null;
-                } else if (currentSelection) {
-                    // טעות
-                    cheerDiv.innerText = "נסה שוב! 😊";
-                    cheerDiv.style.color = "#e74c3c";
-                    setTimeout(() => { cheerDiv.style.color = "#2ecc71"; }, 1000);
+            // יצירת הלוח העליון (מעורבב)
+            const shuffled = [...images].sort(() => Math.random() - 0.5);
+            shuffled.forEach(imgSrc => {
+                const div = document.createElement('div');
+                div.className = 'image-container';
+                div.innerHTML = `<img src="${imgSrc}" onclick="checkMatch('${imgSrc}', this)">`;
+                board.appendChild(div);
+            });
+
+            // יצירת הלוח התחתון (סדר קבוע)
+            images.forEach(imgSrc => {
+                const div = document.createElement('div');
+                div.className = 'target';
+                div.id = 'target-' + imgSrc;
+                div.innerHTML = `<img src="${imgSrc}">`;
+                targets.appendChild(div);
+            });
+        }
+
+        function checkMatch(imgSrc, element) {
+            // הופך את התמונה למטה ללא שקופה
+            const targetDiv = document.getElementById('target-' + imgSrc);
+            if (targetDiv && !targetDiv.classList.contains('matched')) {
+                targetDiv.classList.add('matched');
+                element.parentElement.classList.add('hidden');
+                matchesFound++;
+
+                if (matchesFound === images.length) {
+                    document.getElementById('win-message').style.display = 'block';
                 }
-            };
-            bottomGrid.appendChild(slot);
-        });
+            }
+        }
     </script>
 </body>
 </html>
