@@ -3,34 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משחק זיכרון מתוק</title>
+    <title>משחק התאמת תמונות</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f8ff; text-align: center; margin: 0; padding: 20px; }
-        h1 { color: #ff69b4; text-shadow: 2px 2px #fff; }
-        #game-board, #targets { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 30px; background: rgba(255,255,255,0.5); padding: 15px; border-radius: 20px; }
-        .image-container, .target { width: 80px; height: 80px; border: 3px solid #fff; border-radius: 10px; overflow: hidden; background: #eee; position: relative; cursor: pointer; }
-        img { width: 100%; height: 100%; object-fit: cover; }
-        .target img { opacity: 0.2; } /* הלוח התחתון שקוף בהתחלה */
-        .matched img { opacity: 1 !important; border: 3px solid #4caf50; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f8ff; text-align: center; margin: 0; padding: 20px; touch-action: manipulation; }
+        h1 { color: #ff69b4; }
+        #game-board, #targets { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .image-container, .target { width: 85px; height: 85px; border: 3px solid #ddd; border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
+        img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        .selected { border: 4px solid #ff69b4; transform: scale(1.1); box-shadow: 0 0 10px #ff69b4; }
+        .target img { opacity: 0.3; }
+        .matched { border: 3px solid #4caf50; background: #e8f5e9; pointer-events: none; }
+        .matched img { opacity: 1 !important; }
         .hidden { visibility: hidden; }
-        #win-message { display: none; font-size: 24px; color: #4caf50; font-weight: bold; margin-top: 20px; }
-        button { padding: 10px 20px; font-size: 18px; background: #ff69b4; color: white; border: none; border-radius: 10px; cursor: pointer; }
+        #win-message { display: none; font-size: 30px; color: #4caf50; font-weight: bold; margin: 20px; animation: bounce 1s infinite; }
+        button { padding: 15px 30px; font-size: 20px; background: #ff69b4; color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 0 #d44d91; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     </style>
 </head>
 <body>
 
-    <h1>משחק התמונות של הילד</h1>
+    <h1>משחק התאמה אישי 📸</h1>
     <button id="start-btn" onclick="initGame()">לחצו כאן להתחלת המשחק!</button>
-    <div id="win-message">כל הכבוד! ניצחתם! 🎉</div>
+    <div id="win-message">כל הכבוד! הצלחתם! 🎉</div>
 
-    <h3>מצאו את התמונה המתאימה:</h3>
     <div id="game-board"></div>
-
-    <h3>הלוח שלי:</h3>
     <div id="targets"></div>
 
     <script>
-        // ודאי שהשמות כאן תואמים בדיוק לשמות הקבצים שהעלית!
         const images = [
             'IMG-20260313-WA0000.jpg', 'IMG-20260313-WA0001.jpg',
             'IMG-20260313-WA0002.jpg', 'IMG-20260313-WA0003.jpg',
@@ -39,50 +38,61 @@
             'IMG-20260313-WA0008.jpg', 'IMG-20260313-WA0009.jpg'
         ];
 
+        let selectedImgSrc = null;
+        let selectedElement = null;
         let matchesFound = 0;
 
         function initGame() {
-            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('start-btn').innerText = 'ערבוב מחדש 🔄';
             document.getElementById('win-message').style.display = 'none';
             matchesFound = 0;
+            selectedImgSrc = null;
+            selectedElement = null;
             
             const board = document.getElementById('game-board');
             const targets = document.getElementById('targets');
-            
             board.innerHTML = '';
             targets.innerHTML = '';
 
-            // יצירת הלוח העליון (מעורבב)
+            // לוח עליון (התמונות שצריך להזיז)
             const shuffled = [...images].sort(() => Math.random() - 0.5);
             shuffled.forEach(imgSrc => {
                 const div = document.createElement('div');
                 div.className = 'image-container';
-                div.innerHTML = `<img src="${imgSrc}" onclick="checkMatch('${imgSrc}', this)">`;
+                div.innerHTML = `<img src="${imgSrc}">`;
+                div.onclick = () => {
+                    if (selectedElement) selectedElement.classList.remove('selected');
+                    selectedImgSrc = imgSrc;
+                    selectedElement = div;
+                    div.classList.add('selected');
+                };
                 board.appendChild(div);
             });
 
-            // יצירת הלוח התחתון (סדר קבוע)
+            // לוח תחתון (המטרות)
             images.forEach(imgSrc => {
                 const div = document.createElement('div');
                 div.className = 'target';
-                div.id = 'target-' + imgSrc;
                 div.innerHTML = `<img src="${imgSrc}">`;
+                div.onclick = () => {
+                    if (selectedImgSrc === imgSrc) {
+                        // התאמה הצליחה!
+                        div.classList.add('matched');
+                        selectedElement.classList.add('hidden');
+                        selectedImgSrc = null;
+                        selectedElement = null;
+                        matchesFound++;
+                        if (matchesFound === images.length) {
+                            document.getElementById('win-message').style.display = 'block';
+                        }
+                    } else if (selectedImgSrc) {
+                        // טעות - ניעור קטן (אופציונלי)
+                        div.style.borderColor = 'red';
+                        setTimeout(() => div.style.borderColor = '#ddd', 500);
+                    }
+                };
                 targets.appendChild(div);
             });
-        }
-
-        function checkMatch(imgSrc, element) {
-            // הופך את התמונה למטה ללא שקופה
-            const targetDiv = document.getElementById('target-' + imgSrc);
-            if (targetDiv && !targetDiv.classList.contains('matched')) {
-                targetDiv.classList.add('matched');
-                element.parentElement.classList.add('hidden');
-                matchesFound++;
-
-                if (matchesFound === images.length) {
-                    document.getElementById('win-message').style.display = 'block';
-                }
-            }
         }
     </script>
 </body>
